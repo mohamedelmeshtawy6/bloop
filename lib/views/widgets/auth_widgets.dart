@@ -111,8 +111,10 @@ class PasswordField extends StatefulWidget {
     this.textInputAction = TextInputAction.done,
     this.onFieldSubmitted,
     this.autofillHints = const [AutofillHints.password],
+    this.enabled = true,
   });
 
+  final bool enabled;
   final TextEditingController controller;
   final String label;
   final String? helperText;
@@ -132,6 +134,7 @@ class _PasswordFieldState extends State<PasswordField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
+      enabled: widget.enabled,
       obscureText: _obscured,
       autofillHints: widget.autofillHints,
       textInputAction: widget.textInputAction,
@@ -155,23 +158,38 @@ class _PasswordFieldState extends State<PasswordField> {
   }
 }
 
-final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+/// Main form button that shows a spinner and ignores taps while [loading].
+class LoadingButton extends StatelessWidget {
+  const LoadingButton({
+    super.key,
+    required this.label,
+    required this.loading,
+    required this.onPressed,
+  });
 
-String? validateEmail(String? value) {
-  final email = value?.trim() ?? '';
-  if (email.isEmpty) return 'Enter your email';
-  if (!_emailPattern.hasMatch(email)) return 'Enter a valid email address';
-  return null;
+  final String label;
+  final bool loading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: loading ? null : onPressed,
+      child: loading
+          ? const SizedBox.square(
+              dimension: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            )
+          : Text(label),
+    );
+  }
 }
 
-/// Placeholder until Firebase Authentication is connected.
-void showNotConnectedYet(BuildContext context, String action) {
+/// Shows a short message at the bottom of the screen.
+void showAuthMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
-      SnackBar(
-        content: Text('$action isn\'t connected yet.'),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
 }

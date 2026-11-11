@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'login_screen.dart';
-import 'signup_screen.dart';
+import 'login_view.dart';
+import 'signup_view.dart';
 
 /// The first screen people see: a short pitch for bloop and the two ways in.
-class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
+class WelcomeView extends StatelessWidget {
+  const WelcomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,7 @@ class WelcomeScreen extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return Scaffold(
-      body: SafeArea( 
+      body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
             child: ConstrainedBox(
@@ -63,13 +63,13 @@ class WelcomeScreen extends StatelessWidget {
                       const SizedBox(height: 32),
                       FilledButton(
                         onPressed: () =>
-                            Navigator.of(context).push(SignupScreen.route()),
+                            Navigator.of(context).push(SignupView.route()),
                         child: const Text('Get started'),
                       ),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: () =>
-                            Navigator.of(context).push(LoginScreen.route()),
+                            Navigator.of(context).push(LoginView.route()),
                         child: const Text('I already have an account'),
                       ),
                     ],
