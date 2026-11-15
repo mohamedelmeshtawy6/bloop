@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'data/authentication_repository.dart';
 import 'data/firebase_authentication_repository.dart';
+import 'data/firestore_user_repository.dart';
+import 'data/user_repository.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
 import 'view_models/session_cubit.dart';
@@ -15,8 +17,15 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     // Data layer first, then the app-wide Cubit that depends on it.
-    RepositoryProvider<AuthenticationRepository>(
-      create: (_) => FirebaseAuthenticationRepository(),
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<AuthenticationRepository>(
+          create: (_) => FirebaseAuthenticationRepository(),
+        ),
+        RepositoryProvider<UserRepository>(
+          create: (_) => FirestoreUserRepository(),
+        ),
+      ],
       child: BlocProvider(
         create: (context) =>
             SessionCubit(context.read<AuthenticationRepository>()),
@@ -42,8 +51,9 @@ class MainApp extends StatelessWidget {
       home: BlocBuilder<SessionCubit, SessionState>(
         buildWhen: (previous, current) =>
             previous.isSignedIn != current.isSignedIn,
-        builder: (context, session) =>
-            session.isSignedIn ? const HomeView() : const WelcomeView(),
+        builder: (context, session) => session.isSignedIn
+            ? HomeView.page(session.user!)
+            : const WelcomeView(),
       ),
     );
   }

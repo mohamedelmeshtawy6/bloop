@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/authentication_repository.dart';
+import '../data/user_repository.dart';
 import '../view_models/authentication_form_cubit.dart';
 import '../view_models/signup_cubit.dart';
 import 'login_view.dart';
 import 'widgets/authentication_widgets.dart';
+import 'widgets/user_widgets.dart';
 
 class SignupView extends StatefulWidget {
   const SignupView({super.key});
@@ -13,8 +15,10 @@ class SignupView extends StatefulWidget {
   /// Opens the sign-up screen with its own [SignupCubit].
   static Route<void> route() => MaterialPageRoute(
     builder: (context) => BlocProvider(
-      create: (context) =>
-          SignupCubit(context.read<AuthenticationRepository>()),
+      create: (context) => SignupCubit(
+        context.read<AuthenticationRepository>(),
+        context.read<UserRepository>(),
+      ),
       child: const SignupView(),
     ),
   );
@@ -26,6 +30,7 @@ class SignupView extends StatefulWidget {
 class _SignupViewState extends State<SignupView> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
+  final _username = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
@@ -33,6 +38,7 @@ class _SignupViewState extends State<SignupView> {
   @override
   void dispose() {
     _name.dispose();
+    _username.dispose();
     _email.dispose();
     _password.dispose();
     _confirm.dispose();
@@ -44,6 +50,7 @@ class _SignupViewState extends State<SignupView> {
     if (!_formKey.currentState!.validate()) return;
     context.read<SignupCubit>().signUp(
       name: _name.text,
+      username: _username.text,
       email: _email.text,
       password: _password.text,
     );
@@ -92,6 +99,13 @@ class _SignupViewState extends State<SignupView> {
                       labelText: 'Name',
                       prefixIcon: Icon(Icons.person_outline_rounded),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  UsernameField(
+                    controller: _username,
+                    maxLength: cubit.maxUsernameLength,
+                    enabled: !busy,
+                    validator: cubit.validateUsername,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(

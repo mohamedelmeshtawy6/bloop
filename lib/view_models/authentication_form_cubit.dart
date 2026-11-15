@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../data/authentication_repository.dart';
+import '../data/app_exception.dart';
 
 enum AuthenticationFormStatus {
   /// Waiting for input.
@@ -54,7 +54,7 @@ abstract class AuthenticationFormCubit extends Cubit<AuthenticationFormState> {
     try {
       await task();
       result = AuthenticationFormState(status: onSuccess);
-    } on AuthenticationException catch (e) {
+    } on AppException catch (e) {
       result = AuthenticationFormState(
         status: AuthenticationFormStatus.failure,
         errorMessage: e.message,

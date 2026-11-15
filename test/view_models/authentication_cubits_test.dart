@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:bloop/data/authentication_repository.dart';
+import 'package:bloop/data/user_repository.dart';
 import 'package:bloop/models/app_user.dart';
+import 'package:bloop/models/user_profile.dart';
 import 'package:bloop/view_models/authentication_form_cubit.dart';
 import 'package:bloop/view_models/login_cubit.dart';
 import 'package:bloop/view_models/session_cubit.dart';
@@ -9,66 +11,7 @@ import 'package:bloop/view_models/signup_cubit.dart';
 import 'package:bloop/view_models/validators.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// In-memory stand-in for Firebase.
-class FakeAuthenticationRepository implements AuthenticationRepository {
-  final _controller = StreamController<AppUser?>.broadcast();
-  AppUser? _user;
-
-  /// When set, calls throw this instead of succeeding.
-  AuthenticationException? failWith;
-
-  /// When set, calls wait for this before finishing (to observe loading).
-  Completer<void>? gate;
-
-  final calls = <String>[];
-
-  Future<void> _maybeFail() async {
-    if (gate != null) await gate!.future;
-    final error = failWith;
-    if (error != null) throw error;
-  }
-
-  void _setUser(AppUser? user) {
-    _user = user;
-    _controller.add(user);
-  }
-
-  @override
-  Stream<AppUser?> get userChanges => _controller.stream;
-
-  @override
-  AppUser? get currentUser => _user;
-
-  @override
-  Future<void> signIn({required String email, required String password}) async {
-    calls.add('signIn:$email');
-    await _maybeFail();
-    _setUser(AppUser(id: '1', email: email));
-  }
-
-  @override
-  Future<void> signUp({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    calls.add('signUp:$name:$email');
-    await _maybeFail();
-    _setUser(AppUser(id: '1', email: email, displayName: name));
-  }
-
-  @override
-  Future<void> sendPasswordReset(String email) async {
-    calls.add('reset:$email');
-    await _maybeFail();
-  }
-
-  @override
-  Future<void> signOut() async {
-    calls.add('signOut');
-    _setUser(null);
-  }
-}
+import '../fakes.dart';
 
 /// Collects the statuses a Cubit emits while [action] runs.
 Future<List<AuthenticationFormStatus>> statusesDuring(
@@ -153,15 +96,50 @@ void main() {
   });
 
   group('SignupCubit', () {
-    test('passes the name through and signs in', () async {
-      final cubit = SignupCubit(repo);
-      await cubit.signUp(name: 'Mona', email: 'm@b.co', password: '12345678');
+    late FakeUserRepository users;
+
+    setUp(() => users = FakeUserRepository());
+
+    Future<void> signUp(SignupCubit cubit, {String username = 'Mona_K'}) =>
+        cubit.signUp(
+          name: 'Mona',
+          username: username,
+          email: 'm@b.co',
+          password: '12345678',
+        );
+
+    test('creates the account and a profile with the username', () async {
+      final cubit = SignupCubit(repo, users);
+      await signUp(cubit, username: ' @Mona_K ');
       expect(repo.calls, ['signUp:Mona:m@b.co']);
       expect(cubit.state.status, AuthenticationFormStatus.signedIn);
+      expect(
+        users.profileOf('1'),
+        const UserProfile(id: '1', username: 'mona_k', displayName: 'Mona'),
+      );
+    });
+
+    test('a taken username fails before any account is created', () async {
+      users = FakeUserRepository([
+        const UserProfile(id: '9', username: 'mona_k'),
+      ]);
+      final cubit = SignupCubit(repo, users);
+      await signUp(cubit);
+      expect(repo.calls, isEmpty);
+      expect(cubit.state.status, AuthenticationFormStatus.failure);
+      expect(cubit.state.errorMessage, contains('@mona_k is already taken'));
+    });
+
+    test('still signs in when the profile fails after the account', () async {
+      users.createFailure = const UserRepositoryException('offline');
+      final cubit = SignupCubit(repo, users);
+      await signUp(cubit);
+      expect(cubit.state.status, AuthenticationFormStatus.signedIn);
+      expect(users.profileOf('1'), isNull);
     });
 
     test('validates matching passwords', () {
-      final cubit = SignupCubit(repo);
+      final cubit = SignupCubit(repo, users);
       expect(cubit.validateConfirmPassword('abc', 'abc'), isNull);
       expect(cubit.validateConfirmPassword('abc', 'abd'), isNotNull);
     });
@@ -194,6 +172,21 @@ void main() {
     test('new password needs the minimum length', () {
       expect(Validators.newPassword('1234567'), isNotNull);
       expect(Validators.newPassword('12345678'), isNull);
+    });
+
+    test('username', () {
+      expect(Validators.username(''), isNotNull);
+      expect(Validators.username('ab'), isNotNull);
+      expect(Validators.username('a' * 21), isNotNull);
+      expect(Validators.username('1mona'), isNotNull);
+      expect(Validators.username('mo na'), isNotNull);
+      expect(Validators.username('mona.k_1'), isNull);
+      expect(Validators.username(' @Mona '), isNull);
+    });
+
+    test('normalizeUsername trims, lowercases and drops the @', () {
+      expect(Validators.normalizeUsername('  @Mona_K '), 'mona_k');
+      expect(Validators.normalizeUsername(null), '');
     });
   });
 

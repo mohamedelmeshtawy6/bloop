@@ -1,13 +1,9 @@
 import '../models/app_user.dart';
+import 'app_exception.dart';
 
 /// Thrown by an [AuthenticationRepository] with a message that is safe to show the user.
-class AuthenticationException implements Exception {
-  const AuthenticationException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => 'AuthenticationException: $message';
+class AuthenticationException extends AppException {
+  const AuthenticationException(super.message);
 }
 
 /// Everything the app needs from an authentication backend. View models

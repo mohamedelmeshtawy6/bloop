@@ -27,4 +27,29 @@ abstract final class Validators {
 
   static String? confirmPassword(String? value, String password) =>
       value != password ? 'Passwords don\'t match' : null;
+
+  static const minUsernameLength = 3;
+  static const maxUsernameLength = 20;
+
+  /// Keep in sync with the username pattern in firestore.rules.
+  static final _usernamePattern = RegExp(r'^[a-z][a-z0-9_.]*$');
+
+  /// The stored form of a username: trimmed, lowercase, no leading "@".
+  static String normalizeUsername(String? value) {
+    final username = value?.trim().toLowerCase() ?? '';
+    return username.startsWith('@') ? username.substring(1) : username;
+  }
+
+  static String? username(String? value) {
+    final username = normalizeUsername(value);
+    if (username.isEmpty) return 'Choose a username';
+    if (username.length < minUsernameLength ||
+        username.length > maxUsernameLength) {
+      return 'Use $minUsernameLength to $maxUsernameLength characters';
+    }
+    if (!_usernamePattern.hasMatch(username)) {
+      return 'Start with a letter, then use letters, numbers, _ or .';
+    }
+    return null;
+  }
 }

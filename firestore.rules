@@ -1,0 +1,64 @@
+rules_version = '2';
+
+// users/{uid}          public profile: {username, displayName, createdAt}
+// usernames/{username} reservation:    {uid}
+//
+// A profile and its username reservation are written together in one
+// transaction (FirestoreUserRepository.createProfile). Each rule checks the
+// other document as it will be after the write, so neither can exist alone,
+// and each user can hold exactly one username.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Keep in sync with Validators.username in lib/view_models/validators.dart.
+    function isValidUsername(name) {
+      return name is string && name.matches('^[a-z][a-z0-9_.]{2,19}$');
+    }
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{uid} {
+      // Any signed-in user can read and search profiles. Profiles hold no
+      // email or other private details.
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['username', 'displayName', 'createdAt'])
+        && isValidUsername(request.resource.data.username)
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 50
+        && request.resource.data.createdAt == request.time
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == uid;
+
+      // Display name can change; username and createdAt cannot (yet).
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 50;
+
+      allow delete: if false;
+    }
+
+    match /usernames/{username} {
+      // Single lookups only, so sign-up can check availability before the
+      // account exists. Listing every username is not allowed.
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if signedIn()
+        && isValidUsername(username)
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        // The user's profile must be created in the same write and point
+        // back at this username, which stops one user reserving many.
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == username;
+
+      allow update, delete: if false;
+    }
+  }
+}
