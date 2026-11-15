@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../data/auth_repository.dart';
-import '../view_models/auth_form_cubit.dart';
+import '../data/authentication_repository.dart';
+import '../view_models/authentication_form_cubit.dart';
 import '../view_models/signup_cubit.dart';
 import 'login_view.dart';
-import 'widgets/auth_widgets.dart';
+import 'widgets/authentication_widgets.dart';
 
 class SignupView extends StatefulWidget {
   const SignupView({super.key});
@@ -13,7 +13,8 @@ class SignupView extends StatefulWidget {
   /// Opens the sign-up screen with its own [SignupCubit].
   static Route<void> route() => MaterialPageRoute(
     builder: (context) => BlocProvider(
-      create: (context) => SignupCubit(context.read<AuthRepository>()),
+      create: (context) =>
+          SignupCubit(context.read<AuthenticationRepository>()),
       child: const SignupView(),
     ),
   );
@@ -49,16 +50,16 @@ class _SignupViewState extends State<SignupView> {
   }
 
   /// One-off reactions to state changes (navigation and messages).
-  void _onStateChanged(BuildContext context, AuthFormState state) {
+  void _onStateChanged(BuildContext context, AuthenticationFormState state) {
     switch (state.status) {
-      case AuthFormStatus.signedIn:
+      case AuthenticationFormStatus.signedIn:
         // New accounts are signed in right away; the app root shows home.
         Navigator.of(context).popUntil((route) => route.isFirst);
-      case AuthFormStatus.failure:
-        showAuthMessage(context, state.errorMessage!);
-      case AuthFormStatus.idle ||
-          AuthFormStatus.loading ||
-          AuthFormStatus.resetEmailSent:
+      case AuthenticationFormStatus.failure:
+        showAuthenticationMessage(context, state.errorMessage!);
+      case AuthenticationFormStatus.idle ||
+          AuthenticationFormStatus.loading ||
+          AuthenticationFormStatus.resetEmailSent:
         break;
     }
   }
@@ -67,11 +68,11 @@ class _SignupViewState extends State<SignupView> {
   Widget build(BuildContext context) {
     final cubit = context.read<SignupCubit>();
 
-    return BlocConsumer<SignupCubit, AuthFormState>(
+    return BlocConsumer<SignupCubit, AuthenticationFormState>(
       listener: _onStateChanged,
       builder: (context, state) {
         final busy = state.isLoading;
-        return AuthScaffold(
+        return AuthenticationScaffold(
           title: 'Create your account',
           subtitle: 'It only takes a minute to start chatting.',
           form: Form(
@@ -135,7 +136,7 @@ class _SignupViewState extends State<SignupView> {
               ),
             ),
           ),
-          footer: AuthFooter(
+          footer: AuthenticationFooter(
             question: 'Already have an account?',
             action: 'Log in',
             onPressed: () =>

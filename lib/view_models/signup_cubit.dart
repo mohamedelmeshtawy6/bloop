@@ -1,12 +1,12 @@
-import '../data/auth_repository.dart';
-import 'auth_form_cubit.dart';
+import '../data/authentication_repository.dart';
+import 'authentication_form_cubit.dart';
 import 'validators.dart';
 
 /// View model for the sign-up screen.
-class SignupCubit extends AuthFormCubit {
+class SignupCubit extends AuthenticationFormCubit {
   SignupCubit(this._repository);
 
-  final AuthRepository _repository;
+  final AuthenticationRepository _repository;
 
   int get minPasswordLength => Validators.minPasswordLength;
 

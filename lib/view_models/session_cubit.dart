@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../data/auth_repository.dart';
+import '../data/authentication_repository.dart';
 import '../models/app_user.dart';
 
 /// App-wide sign-in state.
@@ -25,9 +25,9 @@ class SessionCubit extends Cubit<SessionState> {
     _subscription = _repository.userChanges.listen(
       (user) => emit(SessionState(user)),
     );
-   }
+  }
 
-  final AuthRepository _repository;
+  final AuthenticationRepository _repository;
   late final StreamSubscription<AppUser?> _subscription;
 
   Future<void> signOut() => _repository.signOut();

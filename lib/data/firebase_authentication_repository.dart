@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/app_user.dart';
-import 'auth_repository.dart';
+import 'authentication_repository.dart';
 
-/// [AuthRepository] backed by Firebase Authentication (email and password).
-class FirebaseAuthRepository implements AuthRepository {
-  FirebaseAuthRepository({FirebaseAuth? auth})
+/// [AuthenticationRepository] backed by Firebase Authentication (email and password).
+class FirebaseAuthenticationRepository implements AuthenticationRepository {
+  FirebaseAuthenticationRepository({FirebaseAuth? auth})
     : _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _auth;
@@ -55,12 +55,12 @@ class FirebaseAuthRepository implements AuthRepository {
           displayName: user.displayName,
         );
 
-  /// Runs [action] and turns Firebase errors into readable [AuthException]s.
+  /// Runs [action] and turns Firebase errors into readable [AuthenticationException]s.
   Future<T> _guard<T>(Future<T> Function() action) async {
     try {
       return await action();
     } on FirebaseAuthException catch (e) {
-      throw AuthException(_messageFor(e.code));
+      throw AuthenticationException(_messageFor(e.code));
     }
   }
 

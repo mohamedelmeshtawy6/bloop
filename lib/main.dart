@@ -2,8 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'data/auth_repository.dart';
-import 'data/firebase_auth_repository.dart';
+import 'data/authentication_repository.dart';
+import 'data/firebase_authentication_repository.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
 import 'view_models/session_cubit.dart';
@@ -15,10 +15,11 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     // Data layer first, then the app-wide Cubit that depends on it.
-    RepositoryProvider<AuthRepository>(
-      create: (_) => FirebaseAuthRepository(),
+    RepositoryProvider<AuthenticationRepository>(
+      create: (_) => FirebaseAuthenticationRepository(),
       child: BlocProvider(
-        create: (context) => SessionCubit(context.read<AuthRepository>()),
+        create: (context) =>
+            SessionCubit(context.read<AuthenticationRepository>()),
         child: const MainApp(),
       ),
     ),

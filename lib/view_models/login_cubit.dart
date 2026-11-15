@@ -1,12 +1,12 @@
-import '../data/auth_repository.dart';
-import 'auth_form_cubit.dart';
+import '../data/authentication_repository.dart';
+import 'authentication_form_cubit.dart';
 import 'validators.dart';
 
 /// View model for the login screen.
-class LoginCubit extends AuthFormCubit {
+class LoginCubit extends AuthenticationFormCubit {
   LoginCubit(this._repository);
 
-  final AuthRepository _repository;
+  final AuthenticationRepository _repository;
 
   String? validateEmail(String? value) => Validators.email(value);
 
@@ -17,6 +17,6 @@ class LoginCubit extends AuthFormCubit {
 
   Future<void> sendPasswordReset(String email) => run(
     () => _repository.sendPasswordReset(email),
-    onSuccess: AuthFormStatus.resetEmailSent,
+    onSuccess: AuthenticationFormStatus.resetEmailSent,
   );
 }

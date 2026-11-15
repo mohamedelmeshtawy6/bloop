@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Shared layout for the login and sign-up screens: back button, a heading,
 /// the form, and a footer link pinned to the bottom.
-class AuthScaffold extends StatelessWidget {
-  const AuthScaffold({
+class AuthenticationScaffold extends StatelessWidget {
+  const AuthenticationScaffold({
     super.key,
     required this.title,
     required this.subtitle,
@@ -68,8 +68,8 @@ class AuthScaffold extends StatelessWidget {
 }
 
 /// "Question? Action" line at the bottom, e.g. "Don't have an account? Sign up".
-class AuthFooter extends StatelessWidget {
-  const AuthFooter({
+class AuthenticationFooter extends StatelessWidget {
+  const AuthenticationFooter({
     super.key,
     required this.question,
     required this.action,
@@ -186,7 +186,7 @@ class LoadingButton extends StatelessWidget {
 }
 
 /// Shows a short message at the bottom of the screen.
-void showAuthMessage(BuildContext context, String message) {
+void showAuthenticationMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(

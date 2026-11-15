@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../data/auth_repository.dart';
-import '../view_models/auth_form_cubit.dart';
+import '../data/authentication_repository.dart';
+import '../view_models/authentication_form_cubit.dart';
 import '../view_models/login_cubit.dart';
 import 'signup_view.dart';
-import 'widgets/auth_widgets.dart';
+import 'widgets/authentication_widgets.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -13,7 +13,7 @@ class LoginView extends StatefulWidget {
   /// Opens the login screen with its own [LoginCubit].
   static Route<void> route() => MaterialPageRoute(
     builder: (context) => BlocProvider(
-      create: (context) => LoginCubit(context.read<AuthRepository>()),
+      create: (context) => LoginCubit(context.read<AuthenticationRepository>()),
       child: const LoginView(),
     ),
   );
@@ -46,7 +46,7 @@ class _LoginViewState extends State<LoginView> {
   void _forgotPassword() {
     final cubit = context.read<LoginCubit>();
     if (cubit.validateEmail(_email.text) != null) {
-      showAuthMessage(
+      showAuthenticationMessage(
         context,
         'Enter your email above, then tap "Forgot password?" again.',
       );
@@ -56,20 +56,20 @@ class _LoginViewState extends State<LoginView> {
   }
 
   /// One-off reactions to state changes (navigation and messages).
-  void _onStateChanged(BuildContext context, AuthFormState state) {
+  void _onStateChanged(BuildContext context, AuthenticationFormState state) {
     switch (state.status) {
-      case AuthFormStatus.signedIn:
+      case AuthenticationFormStatus.signedIn:
         // The app root switches to the home screen once signed in; close
         // the auth screens stacked on top of it.
         Navigator.of(context).popUntil((route) => route.isFirst);
-      case AuthFormStatus.resetEmailSent:
-        showAuthMessage(
+      case AuthenticationFormStatus.resetEmailSent:
+        showAuthenticationMessage(
           context,
           'We sent a password reset link to ${_email.text.trim()}.',
         );
-      case AuthFormStatus.failure:
-        showAuthMessage(context, state.errorMessage!);
-      case AuthFormStatus.idle || AuthFormStatus.loading:
+      case AuthenticationFormStatus.failure:
+        showAuthenticationMessage(context, state.errorMessage!);
+      case AuthenticationFormStatus.idle || AuthenticationFormStatus.loading:
         break;
     }
   }
@@ -78,11 +78,11 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     final cubit = context.read<LoginCubit>();
 
-    return BlocConsumer<LoginCubit, AuthFormState>(
+    return BlocConsumer<LoginCubit, AuthenticationFormState>(
       listener: _onStateChanged,
       builder: (context, state) {
         final busy = state.isLoading;
-        return AuthScaffold(
+        return AuthenticationScaffold(
           title: 'Welcome back',
           subtitle: 'Log in to pick up your conversations.',
           form: Form(
@@ -130,7 +130,7 @@ class _LoginViewState extends State<LoginView> {
               ),
             ),
           ),
-          footer: AuthFooter(
+          footer: AuthenticationFooter(
             question: 'Don\'t have an account?',
             action: 'Sign up',
             onPressed: () =>

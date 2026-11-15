@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:bloop/data/auth_repository.dart';
+import 'package:bloop/data/authentication_repository.dart';
 import 'package:bloop/models/app_user.dart';
-import 'package:bloop/view_models/auth_form_cubit.dart';
+import 'package:bloop/view_models/authentication_form_cubit.dart';
 import 'package:bloop/view_models/login_cubit.dart';
 import 'package:bloop/view_models/session_cubit.dart';
 import 'package:bloop/view_models/signup_cubit.dart';
@@ -10,12 +10,12 @@ import 'package:bloop/view_models/validators.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// In-memory stand-in for Firebase.
-class FakeAuthRepository implements AuthRepository {
+class FakeAuthenticationRepository implements AuthenticationRepository {
   final _controller = StreamController<AppUser?>.broadcast();
   AppUser? _user;
 
   /// When set, calls throw this instead of succeeding.
-  AuthException? failWith;
+  AuthenticationException? failWith;
 
   /// When set, calls wait for this before finishing (to observe loading).
   Completer<void>? gate;
@@ -71,11 +71,11 @@ class FakeAuthRepository implements AuthRepository {
 }
 
 /// Collects the statuses a Cubit emits while [action] runs.
-Future<List<AuthFormStatus>> statusesDuring(
-  AuthFormCubit cubit,
+Future<List<AuthenticationFormStatus>> statusesDuring(
+  AuthenticationFormCubit cubit,
   Future<void> Function() action,
 ) async {
-  final statuses = <AuthFormStatus>[];
+  final statuses = <AuthenticationFormStatus>[];
   final sub = cubit.stream.listen((s) => statuses.add(s.status));
   await action();
   await pumpEventQueue();
@@ -84,13 +84,13 @@ Future<List<AuthFormStatus>> statusesDuring(
 }
 
 void main() {
-  late FakeAuthRepository repo;
+  late FakeAuthenticationRepository repo;
 
-  setUp(() => repo = FakeAuthRepository());
+  setUp(() => repo = FakeAuthenticationRepository());
 
   group('LoginCubit', () {
     test('starts idle', () {
-      expect(LoginCubit(repo).state.status, AuthFormStatus.idle);
+      expect(LoginCubit(repo).state.status, AuthenticationFormStatus.idle);
     });
 
     test('emits loading then signedIn', () async {
@@ -100,20 +100,20 @@ void main() {
           cubit,
           () => cubit.login(email: 'a@b.co', password: 'secret'),
         ),
-        [AuthFormStatus.loading, AuthFormStatus.signedIn],
+        [AuthenticationFormStatus.loading, AuthenticationFormStatus.signedIn],
       );
       expect(repo.calls, ['signIn:a@b.co']);
     });
 
     test('emits failure with the repository message', () async {
-      repo.failWith = const AuthException('Wrong email or password.');
+      repo.failWith = const AuthenticationException('Wrong email or password.');
       final cubit = LoginCubit(repo);
       expect(
         await statusesDuring(
           cubit,
           () => cubit.login(email: 'a@b.co', password: 'x'),
         ),
-        [AuthFormStatus.loading, AuthFormStatus.failure],
+        [AuthenticationFormStatus.loading, AuthenticationFormStatus.failure],
       );
       expect(cubit.state.errorMessage, 'Wrong email or password.');
     });
@@ -127,14 +127,17 @@ void main() {
       repo.gate!.complete();
       await first;
       expect(repo.calls, hasLength(1));
-      expect(cubit.state.status, AuthFormStatus.signedIn);
+      expect(cubit.state.status, AuthenticationFormStatus.signedIn);
     });
 
     test('password reset emits resetEmailSent', () async {
       final cubit = LoginCubit(repo);
       expect(
         await statusesDuring(cubit, () => cubit.sendPasswordReset('a@b.co')),
-        [AuthFormStatus.loading, AuthFormStatus.resetEmailSent],
+        [
+          AuthenticationFormStatus.loading,
+          AuthenticationFormStatus.resetEmailSent,
+        ],
       );
       expect(repo.calls, ['reset:a@b.co']);
     });
@@ -154,7 +157,7 @@ void main() {
       final cubit = SignupCubit(repo);
       await cubit.signUp(name: 'Mona', email: 'm@b.co', password: '12345678');
       expect(repo.calls, ['signUp:Mona:m@b.co']);
-      expect(cubit.state.status, AuthFormStatus.signedIn);
+      expect(cubit.state.status, AuthenticationFormStatus.signedIn);
     });
 
     test('validates matching passwords', () {
